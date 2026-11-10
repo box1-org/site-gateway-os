@@ -1,0 +1,1 @@
+restrict,command="sudo /usr/bin/bootc status --format json" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDQL2ZMXlHWOsJ3TDDHayIss3JeWa7FclW6J2FxhHf+O box1-status@box1-ci (vm-instance booted-digest check, box1-docs#138)

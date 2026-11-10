@@ -1,0 +1,2 @@
+# The booted-digest reader may only report bootc status (box1-docs#138).
+box1-status ALL=(root) NOPASSWD: /usr/bin/bootc status --format json
