@@ -1,0 +1,9 @@
+# Default boot target for site-gateway-os. It keeps the normal multi-user system
+# (networking, sshd, getty, qemu-guest-agent) and adds this appliance's services.
+# Add your own units with WantedBy=site-gateway-os.target, or list them in Wants=.
+[Unit]
+Description=site-gateway-os appliance
+Requires=multi-user.target
+After=multi-user.target
+Wants=site-gateway-os-heartbeat.service box1-registry-setup.service
+AllowIsolate=yes

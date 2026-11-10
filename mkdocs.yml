@@ -1,0 +1,5 @@
+site_name: site-gateway-os
+nav:
+  - Overview: index.md
+plugins:
+  - techdocs-core

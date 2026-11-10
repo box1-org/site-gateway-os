@@ -1,0 +1,22 @@
+# Example service: replace with your application. Runs unprivileged and logs the
+# booted image revision to journald.
+[Unit]
+Description=site-gateway-os heartbeat (logs the booted image revision)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+ExecStart=/usr/libexec/site-gateway-os/heartbeat
+Restart=on-failure
+RestartSec=5s
+StartLimitIntervalSec=300
+StartLimitBurst=5
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=site-gateway-os.target
