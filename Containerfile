@@ -30,7 +30,7 @@ COPY rootfs/ /
 COPY rootfs-cloud-init/ /
 # The site applications (gateway, ops, simulator) from box1-org/site-gateway, as its
 # gated bundle, pinned by digest. Releases of site-gateway propose the new digest here.
-COPY --from=registry.apps.ocp.box1.org/box1-ci/site-gateway-bundle@sha256:8e9d01383c43e37cbf30b083be311866dc9806158fa09062ede88f9afb41edb6 / /usr/lib/box1/site-gateway/
+COPY --from=registry.apps.ocp.box1.org/box1-ci/site-gateway-bundle@sha256:26543a45360ae49f3d48db695d3973551b39a2b4429c82ba8c2f6351da33e102 / /usr/lib/box1/site-gateway/
 
 # virt_qemu_ga_manage_ssh lets qemu-guest-agent write ~/.ssh/authorized_keys, which
 # KubeVirt accessCredentials needs; it is off by default in RHEL.
