@@ -55,3 +55,6 @@ LABEL org.opencontainers.image.source="https://github.com/box1-org/site-gateway-
       org.opencontainers.image.revision="${SOURCE_REVISION}" \
       org.opencontainers.image.title="site-gateway-os" \
       containers.bootc="1"
+
+
+COPY --from=.../box1-ci/site-gateway-bundle@sha256:8e9d01383c43e37cbf30b083be311866dc9806158fa09062ede88f9afb41edb6
