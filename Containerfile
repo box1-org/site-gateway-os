@@ -38,6 +38,16 @@ RUN rm -rf /run/secrets/entitlement /run/box1-repos /run/rhsm \
  && printf 'NAME=%s\nREVISION=%s\n' "site-gateway-os" "${SOURCE_REVISION}" > /usr/lib/box1-image-release \
  && chmod 0755 /usr/libexec/site-gateway-os/heartbeat /usr/libexec/box1/registry-setup \
  && chmod 0440 /etc/sudoers.d/90-box1-wheel && visudo -cf /etc/sudoers.d/90-box1-wheel \
+ && chmod 0440 /etc/sudoers.d/92-box1-status && visudo -cf /etc/sudoers.d/92-box1-status \
+ && chown -R root:root /usr/share/box1/ssh \
+ && chmod 0755 /usr/share/box1/ssh /usr/share/box1/ssh/authorized_keys \
+ && chmod 0644 /usr/share/box1/ssh/authorized_keys/box1-status /etc/ssh/sshd_config.d/40-box1-status.conf \
+ && systemd-sysusers --dry-run /usr/lib/sysusers.d/box1-status.conf \
+ && ssh-keygen -q -t ed25519 -N '' -f /tmp/box1-build-hostkey \
+ && /usr/sbin/sshd -T -h /tmp/box1-build-hostkey -C user=box1-status,host=build,addr=127.0.0.1 \
+      | grep -qx 'authorizedkeysfile .ssh/authorized_keys /usr/share/box1/ssh/authorized_keys/%u' \
+ && rm -f /tmp/box1-build-hostkey /tmp/box1-build-hostkey.pub \
+ && grep -q '^restrict,command="sudo /usr/bin/bootc status --format json" ssh-ed25519 ' /usr/share/box1/ssh/authorized_keys/box1-status \
  && setsebool -P virt_qemu_ga_manage_ssh on \
  && systemctl set-default site-gateway-os.target \
  && systemctl enable box1-registry-setup.service \
