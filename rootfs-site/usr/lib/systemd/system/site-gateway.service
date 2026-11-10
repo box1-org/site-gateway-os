@@ -5,6 +5,8 @@
 Description=Box1 site gateway: MQTT to Kafka forwarder, pick list, site agent
 Documentation=https://github.com/box1-org/site-gateway
 ConditionPathExists=/etc/box1/site.env
+# Keep restarting (Restart=on-failure, 5 s apart) however often it fails.
+StartLimitIntervalSec=0
 Requires=site-postgres.service site-broker.service
 After=site-postgres.service site-broker.service box1-site-facts.service network-online.target
 Wants=network-online.target box1-site-facts.timer
@@ -20,7 +22,6 @@ ExecStart=/usr/bin/java -Xmx384m -XX:+ExitOnOutOfMemoryError -Djava.io.tmpdir=/t
 WorkingDirectory=/usr/lib/box1/site-gateway/gateway
 Restart=on-failure
 RestartSec=5s
-StartLimitIntervalSec=0
 TimeoutStopSec=30s
 NoNewPrivileges=yes
 ProtectSystem=strict
