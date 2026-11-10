@@ -125,8 +125,10 @@ RUN rm -rf /run/secrets/entitlement /run/box1-repos /run/rhsm \
       box1-site-facts.service box1-site-facts.timer site-otel-collector.service \
  && rm -rf /tmp/quadlet-gen /etc/systemd/system/site-postgres.service /etc/systemd/system/site-broker.service \
  && { /usr/bin/opentelemetry-collector components 2>&1 | grep -E '^[a-z_]+:$|^    - name:' | tr '\n' ' '; echo; true; } \
+ && mkdir /var/lib/box1-site-otel \
  && BOX1_SITE_ID=site_build BOX1_INSTANCE=build /usr/bin/opentelemetry-collector validate \
       --config=/usr/share/site-gateway-os/otel-collector.yaml \
+ && rmdir /var/lib/box1-site-otel \
  && bootc container lint
 
 LABEL org.opencontainers.image.source="https://github.com/box1-org/site-gateway-os" \
