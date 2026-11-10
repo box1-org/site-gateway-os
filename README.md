@@ -66,7 +66,7 @@ without it (for example this repository's own VM) none of the site units start a
 | `site-otel-collector.service` | Red Hat build of OpenTelemetry: journald, host and gateway metrics → `box1-collector` | `/usr/share/site-gateway-os/otel-collector.yaml` |
 | greenboot `/etc/greenboot/check/required.d/*-site-*.sh` | PostgreSQL, MQTT listener, site-gateway ready (database, migrations, MQTT; never Kafka), site-ops | rollback after 3 failed boots |
 
-- The quadlet images are mirrored into `box1-ci` by digest (box1-workloads-dev `ci/site-gateway/site-images.yaml`)
+- The quadlet images are mirrored into `box1-ci` by digest (box1-gitops `platform/pipelines/ci/site-images.yaml`)
   and pulled with the pull token `box1-registry-setup` installs; the image contains no registry credential.
 - Site data under `/var` survives reboots, `bootc upgrade` and `bootc rollback`; a rebuild from the instance loses it.
 - Every build starts the pinned AMQ Broker image with `site-broker-start` and requires MQTT on 1883, generates and

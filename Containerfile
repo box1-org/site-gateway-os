@@ -4,7 +4,7 @@
 # Build-time check of the site broker (box1-docs#126): start the pinned AMQ Broker image
 # with the same start script the site uses and require MQTT on 1883. The final image
 # copies the result, so this stage runs in every build. Same digest as the quadlet's
-# box1-ci/site-amq-broker mirror (box1-workloads-dev ci/site-gateway/site-images.yaml).
+# box1-ci/site-amq-broker mirror (box1-gitops platform/pipelines/ci/site-images.yaml).
 FROM registry.redhat.io/amq7/amq-broker-rhel9@sha256:e77cb86f876b3ba2c4f853e8044b2ab5864346bc4b17e788a0da1287e7c8ec69 AS broker-check
 COPY rootfs-site/usr/libexec/box1/site-broker-start /tmp/site-broker-start
 RUN export ARTEMIS_INSTANCE_DIR=/tmp/site-broker \

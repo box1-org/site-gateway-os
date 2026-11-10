@@ -1,6 +1,6 @@
 # Site PostgreSQL 16 (rhel10/postgresql-16), the outbox and pick-list store of
 # site-gateway (box1-docs#126, #127). Pinned by digest, mirrored into box1-ci
-# (box1-workloads-dev ci/site-gateway/site-images.yaml) and pulled with the pull token
+# (box1-gitops platform/pipelines/ci/site-images.yaml) and pulled with the pull token
 # box1-registry-setup installs; the image holds no credential. Loopback only.
 # Data: /var/lib/box1-site/postgres, kept across reboots, bootc upgrade and rollback.
 [Unit]
