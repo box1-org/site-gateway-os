@@ -1,0 +1,8 @@
+{
+  "id": "537500d7-dc49-4be8-92ab-8d8b57cc6c6d",
+  "name": "site-gateway-os",
+  "namespace": "site-gateway-os-dev",
+  "owner": "user:default/mike",
+  "templateVersion": "1.0.0",
+  "profile": "virtual-machine"
+}
