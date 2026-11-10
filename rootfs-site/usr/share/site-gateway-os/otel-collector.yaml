@@ -54,10 +54,11 @@ processors:
     limit_mib: 160
     spike_limit_mib: 32
   # Never forward a line that looks like it carries a credential (the apps never log one).
+  # journald bodies are maps; MESSAGE is the log line.
   filter/credentials:
     error_mode: ignore
     log_conditions:
-      - 'IsMatch(body, "(?i)(client_secret|access_token|authorization: *bearer|postgresql_password|site_db_password)")'
+      - 'IsMatch(log.body["MESSAGE"], "(?i)(client_secret|access_token|authorization: *bearer|postgresql_password|site_db_password)")'
   # site_id is the resource attribute site.id; drop the gateway's own label so they cannot clash.
   attributes/metrics:
     actions:
