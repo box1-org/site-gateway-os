@@ -39,8 +39,12 @@ RUN rm -rf /run/secrets/entitlement /run/box1-repos /run/rhsm \
  && chmod 0755 /usr/libexec/site-gateway-os/heartbeat /usr/libexec/box1/registry-setup \
  && chmod 0440 /etc/sudoers.d/90-box1-wheel && visudo -cf /etc/sudoers.d/90-box1-wheel \
  && chmod 0440 /etc/sudoers.d/92-box1-status && visudo -cf /etc/sudoers.d/92-box1-status \
- && chown -R root:root /usr/share/box1/ssh \
- && chmod 0755 /usr/share/box1/ssh /usr/share/box1/ssh/authorized_keys \
+ && chown -R root:root /usr/share/box1 \
+ && chmod 0755 /usr/share/box1 /usr/share/box1/ssh /usr/share/box1/ssh/authorized_keys \
+ && for d in /usr /usr/share /usr/share/box1 /usr/share/box1/ssh /usr/share/box1/ssh/authorized_keys; do \
+      test "$(stat -c %U "$d")" = root && test -z "$(find "$d" -maxdepth 0 -perm /022)" \
+        || { echo "sshd StrictModes would refuse $d: $(stat -c '%A %U' "$d")"; exit 1; }; \
+    done \
  && chmod 0644 /usr/share/box1/ssh/authorized_keys/box1-status /etc/ssh/sshd_config.d/40-box1-status.conf \
  && systemd-sysusers --dry-run /usr/lib/sysusers.d/box1-status.conf \
  && ssh-keygen -q -t ed25519 -N '' -f /tmp/box1-build-hostkey \
