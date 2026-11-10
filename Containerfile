@@ -111,7 +111,8 @@ RUN rm -rf /run/secrets/entitlement /run/box1-repos /run/rhsm \
       /etc/greenboot/check/required.d/*-site-*.sh \
  && systemctl enable site-gateway.service site-ops.service site-simulator.service box1-site-secrets.service \
       box1-site-facts.timer site-otel-collector.service \
- && systemctl is-enabled greenboot-healthcheck.service greenboot-set-rollback-trigger.service \
+ && systemctl enable greenboot-healthcheck.service \
+ && systemctl is-enabled greenboot-healthcheck.service greenboot-set-rollback-trigger.service greenboot-success.target \
  && rpm -q java-21-openjdk-headless greenboot podman opentelemetry-collector \
  && java -XX:-UsePerfData -version \
  && for m in gateway ops simulator; do test -f /usr/lib/box1/site-gateway/$m/quarkus-app/quarkus-run.jar || exit 1; done \
