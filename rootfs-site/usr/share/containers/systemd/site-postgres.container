@@ -1,0 +1,31 @@
+# Site PostgreSQL 16 (rhel10/postgresql-16), the outbox and pick-list store of
+# site-gateway (box1-docs#126, #127). Pinned by digest, mirrored into box1-ci
+# (box1-workloads-dev ci/site-gateway/site-images.yaml) and pulled with the pull token
+# box1-registry-setup installs; the image holds no credential. Loopback only.
+# Data: /var/lib/box1-site/postgres, kept across reboots, bootc upgrade and rollback.
+[Unit]
+Description=Box1 site PostgreSQL
+ConditionPathExists=/etc/box1/site.env
+Requires=box1-site-secrets.service
+After=box1-site-secrets.service box1-registry-setup.service network-online.target
+Wants=network-online.target
+
+[Container]
+ContainerName=site-postgres
+Image=image-registry.openshift-image-registry.svc:5000/box1-ci/site-postgresql@sha256:640273e1145aa1ff9bba43930d6042839240fd1b791d1970c607374413c6b03b
+Pull=missing
+EnvironmentFile=/var/lib/box1-site/secrets/postgres.env
+PublishPort=127.0.0.1:5432:5432
+Volume=/var/lib/box1-site/postgres:/var/lib/pgsql/data:Z
+HealthCmd=/usr/libexec/check-container
+HealthInterval=30s
+PodmanArgs=--memory=512m
+
+[Service]
+Environment=REGISTRY_AUTH_FILE=/run/ostree/auth.json
+Restart=always
+RestartSec=5s
+TimeoutStartSec=900
+
+[Install]
+WantedBy=site-gateway-os.target

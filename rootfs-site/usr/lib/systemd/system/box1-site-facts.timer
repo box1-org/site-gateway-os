@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh the Box1 site OS facts
+ConditionPathExists=/etc/box1/site.env
+
+[Timer]
+OnActiveSec=5s
+OnUnitActiveSec=30s
+AccuracySec=5s
+
+[Install]
+WantedBy=site-gateway-os.target

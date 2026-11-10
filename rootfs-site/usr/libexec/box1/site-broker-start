@@ -1,0 +1,19 @@
+#!/bin/bash
+# Runs inside the AMQ Broker container (box1-docs#126). Creates the broker instance once
+# with only the MQTT acceptor (no web console, no AMQP/STOMP/HornetQ acceptors), NIO
+# journal, persistence on, then runs it. The site-gateway-os build runs this script
+# against the pinned image and checks that MQTT answers on 1883.
+set -euo pipefail
+instance=${ARTEMIS_INSTANCE_DIR:-/var/lib/artemis-instance}
+home=${AMQ_HOME:-/opt/amq}
+if [ ! -f "$instance/etc/broker.xml" ]; then
+  # The admin user is required by "artemis create --silent"; nothing uses it (no web
+  # console, loopback only), so its password is random and never stored elsewhere.
+  "$home/bin/artemis" create "$instance" --silent --force \
+    --user site-admin --password "$(head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n')" \
+    --allow-anonymous --host 0.0.0.0 --no-web --nio \
+    --no-amqp-acceptor --no-hornetq-acceptor --no-stomp-acceptor \
+    --java-memory 384M
+  grep -q 'protocols=MQTT' "$instance/etc/broker.xml"
+fi
+exec "$instance/bin/artemis" run

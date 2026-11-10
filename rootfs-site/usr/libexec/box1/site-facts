@@ -1,0 +1,79 @@
+#!/usr/bin/python3
+"""Write /run/box1/site-facts.json for the site agent (box1-docs#130, #133).
+
+Runs as root (bootc status needs it) so the site services need no privilege. Only
+digests and the greenboot result are written; anything unexpected becomes null or
+UNKNOWN. The bundle digest is read from the Containerfile this image was built from.
+"""
+import json
+import os
+import re
+import subprocess
+import tempfile
+
+OUT = "/run/box1/site-facts.json"
+CONTAINERFILE = "/usr/share/site-gateway-os/Containerfile"
+DIGEST = re.compile(r"^sha256:[a-f0-9]{64}$")
+BUNDLE = re.compile(r"^COPY --from=\S+/box1-ci/site-gateway-bundle@(sha256:[a-f0-9]{64}) ", re.M)
+
+
+def digest(value):
+    return value if isinstance(value, str) and DIGEST.match(value) else None
+
+
+def slot(status, name):
+    entry = (status or {}).get(name) or {}
+    image = entry.get("image") or {}
+    return digest(image.get("imageDigest"))
+
+
+def bootc():
+    try:
+        out = subprocess.run(["/usr/bin/bootc", "status", "--format", "json"], capture_output=True,
+                             text=True, timeout=60, check=True).stdout
+        return json.loads(out).get("status") or {}
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return {}
+
+
+def greenboot():
+    """GREEN when this boot's health check passed, RED when it failed, else UNKNOWN."""
+    try:
+        out = subprocess.run(["/usr/bin/systemctl", "show", "greenboot-healthcheck.service",
+                              "--property=ActiveState,Result,LoadState"], capture_output=True, text=True,
+                             timeout=10, check=True).stdout
+    except (OSError, subprocess.SubprocessError):
+        return "UNKNOWN"
+    props = dict(line.split("=", 1) for line in out.splitlines() if "=" in line)
+    if props.get("LoadState") != "loaded":
+        return "UNKNOWN"
+    if props.get("ActiveState") == "failed" or props.get("Result") not in (None, "success"):
+        return "RED"
+    if props.get("ActiveState") == "active":
+        return "GREEN"
+    return "UNKNOWN"
+
+
+def bundle():
+    try:
+        with open(CONTAINERFILE, encoding="utf-8") as f:
+            found = BUNDLE.findall(f.read())
+        return found[0] if len(found) == 1 else None
+    except OSError:
+        return None
+
+
+status = bootc()
+facts = {
+    "bootedImageDigest": slot(status, "booted"),
+    "stagedImageDigest": slot(status, "staged"),
+    "rollbackImageDigest": slot(status, "rollback"),
+    "greenbootStatus": greenboot(),
+    "bundleDigest": bundle(),
+}
+os.makedirs(os.path.dirname(OUT), mode=0o755, exist_ok=True)
+fd, tmp = tempfile.mkstemp(dir=os.path.dirname(OUT), prefix=".facts.")
+with os.fdopen(fd, "w") as f:
+    json.dump(facts, f)
+os.chmod(tmp, 0o644)
+os.replace(tmp, OUT)
