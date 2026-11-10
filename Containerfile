@@ -113,7 +113,7 @@ RUN rm -rf /run/secrets/entitlement /run/box1-repos /run/rhsm \
       box1-site-facts.timer site-otel-collector.service \
  && systemctl is-enabled greenboot-healthcheck.service greenboot-set-rollback-trigger.service \
  && rpm -q java-21-openjdk-headless greenboot podman opentelemetry-collector \
- && java -version \
+ && java -XX:-UsePerfData -version \
  && for m in gateway ops simulator; do test -f /usr/lib/box1/site-gateway/$m/quarkus-app/quarkus-run.jar || exit 1; done \
  && grep -Ec '^COPY --from=\S+/box1-ci/site-gateway-bundle@sha256:[a-f0-9]{64} ' /usr/share/site-gateway-os/Containerfile | grep -qx 1 \
  && mkdir -p /tmp/quadlet-gen \
