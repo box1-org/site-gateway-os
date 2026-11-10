@@ -18,7 +18,7 @@ Entrypoint=/opt/box1/site-broker-start
 Volume=/var/lib/box1-site/broker-bin:/opt/box1:ro,Z
 Volume=/var/lib/box1-site/broker:/var/lib/artemis-instance:Z
 PublishPort=127.0.0.1:1883:1883
-PodmanArgs=--memory=640m
+PodmanArgs=--memory=768m
 
 [Service]
 Environment=REGISTRY_AUTH_FILE=/run/ostree/auth.json

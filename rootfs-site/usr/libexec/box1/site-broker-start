@@ -15,5 +15,8 @@ if [ ! -f "$instance/etc/broker.xml" ]; then
     --no-amqp-acceptor --no-hornetq-acceptor --no-stomp-acceptor \
     --java-memory 384M
   grep -q 'protocols=MQTT' "$instance/etc/broker.xml"
+  # "artemis create" keeps its default -Xms512M; the JVM refuses an initial heap above -Xmx (384M).
+  sed -i -E 's/-Xms[0-9]+[MmGg]/-Xms128M/' "$instance/etc/artemis.profile"
+  grep -q -- '-Xms128M' "$instance/etc/artemis.profile"
 fi
 exec "$instance/bin/artemis" run
