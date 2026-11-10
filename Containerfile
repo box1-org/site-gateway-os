@@ -62,13 +62,14 @@ COPY rootfs/ /
 # cloud-init configuration, the box1-site user, its credential directory and the
 # sshd-keygen override (box1-docs#140).
 COPY rootfs-cloud-init/ /
-# The site applications (gateway, ops, simulator) from box1-org/site-gateway, as its
-# gated bundle, pinned by digest. Releases of site-gateway propose the new digest here.
 # Site services, quadlets, greenboot checks and the collector config (box1-docs#126-#133).
 COPY rootfs-site/ /
 # The image's own Containerfile, from which box1-site-facts reads the bundle digest.
 COPY Containerfile /usr/share/site-gateway-os/Containerfile
 COPY --from=broker-check /tmp/site-broker-verified /usr/share/site-gateway-os/broker-verified
+
+# The site applications (gateway, ops, simulator) from box1-org/site-gateway, as its
+# gated bundle, pinned by digest. Releases of site-gateway propose the new digest here.
 COPY --from=registry.apps.ocp.box1.org/box1-ci/site-gateway-bundle@sha256:8e9d01383c43e37cbf30b083be311866dc9806158fa09062ede88f9afb41edb6 / /usr/lib/box1/site-gateway/
 
 # virt_qemu_ga_manage_ssh lets qemu-guest-agent write ~/.ssh/authorized_keys, which
