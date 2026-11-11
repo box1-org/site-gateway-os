@@ -1,0 +1,33 @@
+# Site AMQ Broker 7.14 (Artemis) with only the MQTT acceptor (box1-docs#126, #127).
+# Pinned by digest, mirrored into box1-ci and pulled with the guest's existing pull
+# token. MQTT on 127.0.0.1:1883 only; anonymous access is limited to that loopback port.
+# The instance (broker.xml, journal, durable MQTT sessions) is created on first start
+# by /usr/libexec/box1/site-broker-start under /var/lib/box1-site/broker, so queued
+# readings survive restarts, bootc upgrade and rollback.
+[Unit]
+Description=Box1 site AMQ Broker (MQTT)
+ConditionPathExists=/etc/box1/site.env
+After=box1-registry-setup.service network-online.target
+Wants=network-online.target
+
+[Container]
+ContainerName=site-broker
+Image=image-registry.openshift-image-registry.svc:5000/box1-ci/site-amq-broker@sha256:e77cb86f876b3ba2c4f853e8044b2ab5864346bc4b17e788a0da1287e7c8ec69
+Pull=missing
+Entrypoint=/opt/box1/site-broker-start
+Volume=/var/lib/box1-site/broker-bin:/opt/box1:ro,Z
+Volume=/var/lib/box1-site/broker:/var/lib/artemis-instance:Z
+PublishPort=127.0.0.1:1883:1883
+PodmanArgs=--memory=768m
+
+[Service]
+Environment=REGISTRY_AUTH_FILE=/run/ostree/auth.json
+# /usr is read-only and cannot be relabelled for the container, so the start script is
+# copied to /var first (root, before the container starts).
+ExecStartPre=/usr/bin/install -D -m 0755 -o root -g root /usr/libexec/box1/site-broker-start /var/lib/box1-site/broker-bin/site-broker-start
+Restart=always
+RestartSec=5s
+TimeoutStartSec=900
+
+[Install]
+WantedBy=site-gateway-os.target

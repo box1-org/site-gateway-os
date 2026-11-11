@@ -51,6 +51,32 @@ Releases never reboot the VM on their own: `bootc-fetch-apply-updates.timer` is 
 | Per-instance identity (cloud-init) | Optional. A VM with a `cloudinitdisk` NoCloud volume (`secretRef: <instance>-cloud-init`) gets `/etc/box1/site.env` (0644) and `/etc/box1/credentials/keycloak-client-secret` (0400, user `box1-site`), rewritten at every boot. Without the disk, cloud-init writes nothing. `rootfs-cloud-init/` holds its configuration, which runs only `write_files`; treat write access to the Secret as root in the guest. See box1-docs `runbooks/vm-cloud-init-identity.md` |
 | Shared build tasks | `box1-org/box1-gitops`: `platform/pipelines/tasks/bootc-*.yaml`; see `GOLDEN-PATH.md` |
 
+## The edge site (box1-docs#126–#133)
+
+On an instance with site identity (`/etc/box1/site.env` from cloud-init) the image runs a complete edge site; on a VM
+without it (for example this repository's own VM) none of the site units start and the greenboot site checks pass.
+
+| Unit | What | Where |
+| --- | --- | --- |
+| `site-broker.service` (quadlet) | AMQ Broker 7.14.1, MQTT only, `box1-ci/site-amq-broker@sha256:e77cb86f…` | 127.0.0.1:1883, data `/var/lib/box1-site/broker` |
+| `site-postgres.service` (quadlet) | PostgreSQL 16, `box1-ci/site-postgresql@sha256:640273e1…` | 127.0.0.1:5432, data `/var/lib/box1-site/postgres` |
+| `site-gateway`, `site-ops`, `site-simulator` | the `site-gateway` bundle (`/usr/lib/box1/site-gateway/`) on `java-21-openjdk-headless`, user `box1-site` | 127.0.0.1:8080 / 8081 / 8082 |
+| `box1-site-secrets.service` | database password, generated once, root-only env files | `/var/lib/box1-site/secrets` |
+| `box1-site-facts.timer` | booted/staged/rollback digests, greenboot result, bundle digest for the heartbeat | `/run/box1/site-facts.json` |
+| `site-otel-collector.service` | Red Hat build of OpenTelemetry: journald, host and gateway metrics → `box1-collector` | `/usr/share/site-gateway-os/otel-collector.yaml` |
+| greenboot `/etc/greenboot/check/required.d/*-site-*.sh` | PostgreSQL, MQTT listener, site-gateway ready (database, migrations, MQTT; never Kafka), site-ops | rollback after 3 failed boots |
+
+- The quadlet images are mirrored into `box1-ci` by digest (box1-gitops `platform/pipelines/ci/site-images.yaml`)
+  and pulled with the pull token `box1-registry-setup` installs; the image contains no registry credential.
+- Site data under `/var` survives reboots, `bootc upgrade` and `bootc rollback`; a rebuild from the instance loses it.
+- Every build starts the pinned AMQ Broker image with `site-broker-start` and requires MQTT on 1883, generates and
+  verifies the quadlet and site units (`systemd-analyze verify`), and validates the collector config with the
+  collector binary.
+- `greenboot-default-health-checks` is not installed: its repository DNS check would roll back a site that reboots
+  while disconnected. The collector RPM is installed without its scriptlets (its SELinux module commit breaks the
+  later `setsebool -P` on the cluster's buildah); the image runs it under its own unit.
+- Operations: box1-docs `runbooks/edge-sites.md` and site-gateway `docs/runbook.md`.
+
 ## Build locally (Apple Silicon)
 
 ```sh

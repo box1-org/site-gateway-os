@@ -1,0 +1,37 @@
+# Box1 site equipment simulator (box1-org/site-gateway, module simulator), from the bundle copied into this image by
+# digest. Runs only on a site instance: /etc/box1/site.env comes from the instance's
+# cloud-init disk (box1-docs#140). Listens on 127.0.0.1:8082.
+[Unit]
+Description=Box1 site equipment simulator
+Documentation=https://github.com/box1-org/site-gateway
+ConditionPathExists=/etc/box1/site.env
+# Keep restarting (Restart=on-failure, 5 s apart) however often it fails.
+StartLimitIntervalSec=0
+Wants=site-broker.service
+# After the gateway, so its durable MQTT subscription usually exists before the first readings.
+After=site-broker.service site-gateway.service
+
+[Service]
+Type=simple
+User=box1-site
+Group=box1-site
+EnvironmentFile=/etc/box1/site.env
+Environment=HTTP_PORT=8082
+ExecStart=/usr/bin/java -Xmx128m -XX:+ExitOnOutOfMemoryError -Djava.io.tmpdir=/tmp -jar /usr/lib/box1/site-gateway/simulator/quarkus-app/quarkus-run.jar
+WorkingDirectory=/usr/lib/box1/site-gateway/simulator
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+
+[Install]
+WantedBy=site-gateway-os.target

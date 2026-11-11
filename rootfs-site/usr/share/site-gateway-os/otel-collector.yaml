@@ -1,0 +1,111 @@
+# In-guest collector of an edge site (box1-docs#132). Validated at image build with
+# `opentelemetry-collector validate`. Settings from /etc/box1/site.env:
+#   BOX1_SITE_ID, BOX1_INSTANCE, BOX1_OTLP_ENDPOINT (default box1-collector, OTLP gRPC).
+# Disconnected behaviour: the exporter retries without a time limit and queues batches on
+# disk (file_storage) up to queue_size batches (about 1.5 MB per batch at most); when the
+# queue is full, new batches are dropped and counted (otelcol_exporter_enqueue_failed_*).
+# journald keeps its cursor in the same storage, so logs written while the link is down
+# are read when there is room again.
+extensions:
+  file_storage:
+    directory: /var/lib/box1-site-otel
+    create_directory: false
+
+receivers:
+  journald:
+    units:
+      - site-gateway.service
+      - site-ops.service
+      - site-simulator.service
+      - site-broker.service
+      - site-postgres.service
+      - site-otel-collector.service
+      - box1-site-facts.service
+      - box1-site-secrets.service
+      - box1-registry-setup.service
+      - greenboot-healthcheck.service
+      - greenboot-set-rollback-trigger.service
+      - bootc-fetch-apply-updates.service
+      - ostree-finalize-staged.service
+    priority: info
+    storage: file_storage
+  host_metrics:
+    root_path: /
+    collection_interval: 30s
+    scrapers:
+      cpu: {}
+      memory: {}
+      load: {}
+      disk: {}
+      filesystem: {}
+      network: {}
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: site-gateway
+          scrape_interval: 30s
+          metrics_path: /q/metrics
+          static_configs:
+            - targets: ["127.0.0.1:8080"]
+
+processors:
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 160
+    spike_limit_mib: 32
+  # Never forward a line that looks like it carries a credential (the apps never log one).
+  # journald bodies are maps; MESSAGE is the log line.
+  filter/credentials:
+    error_mode: ignore
+    log_conditions:
+      - 'IsMatch(log.body["MESSAGE"], "(?i)(client_secret|access_token|authorization: *bearer|postgresql_password|site_db_password)")'
+  # site_id is the resource attribute site.id; drop the gateway's own label so they cannot clash.
+  attributes/metrics:
+    actions:
+      - key: site_id
+        action: delete
+  resource/site:
+    attributes:
+      - key: site.id
+        value: ${env:BOX1_SITE_ID}
+        action: upsert
+      - key: host.name
+        value: ${env:BOX1_INSTANCE}
+        action: upsert
+      - key: service.namespace
+        value: box1-sites
+        action: upsert
+  batch:
+    send_batch_size: 512
+    timeout: 5s
+
+exporters:
+  otlp_grpc:
+    endpoint: ${env:BOX1_OTLP_ENDPOINT:-http://box1-collector.box1-observability.svc:4317}
+    tls:
+      insecure: true
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 60s
+      max_elapsed_time: 0s
+    sending_queue:
+      enabled: true
+      num_consumers: 2
+      queue_size: 2000
+      storage: file_storage
+
+service:
+  extensions: [file_storage]
+  telemetry:
+    metrics:
+      level: none
+  pipelines:
+    logs:
+      receivers: [journald]
+      processors: [memory_limiter, filter/credentials, resource/site, batch]
+      exporters: [otlp_grpc]
+    metrics:
+      receivers: [host_metrics, prometheus]
+      processors: [memory_limiter, attributes/metrics, resource/site, batch]
+      exporters: [otlp_grpc]

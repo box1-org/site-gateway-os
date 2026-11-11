@@ -1,0 +1,10 @@
+# Booted, staged and rollback image digests, the greenboot result and the bundle digest,
+# for the site agent's heartbeat (box1-docs#130, #133). Root only for bootc status.
+[Unit]
+Description=Box1 site OS facts for the site agent
+ConditionPathExists=/etc/box1/site.env
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/box1/site-facts
+TimeoutStartSec=90

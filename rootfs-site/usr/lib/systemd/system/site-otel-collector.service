@@ -1,0 +1,28 @@
+# In-guest OpenTelemetry collector (Red Hat build, RHEL 10 opentelemetry-collector RPM,
+# box1-docs#132): journald of the site units, AMQ Broker, PostgreSQL, greenboot and bootc,
+# host metrics, and site-gateway's /q/metrics, exported over OTLP to box1-collector with
+# siteId. Disconnected: a bounded on-disk queue (see the config). Not the package's own
+# unit: the image installs the binary without its scriptlets (see the Containerfile).
+[Unit]
+Description=Box1 site OpenTelemetry collector
+ConditionPathExists=/etc/box1/site.env
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/box1/site.env
+ExecStart=/usr/bin/opentelemetry-collector --config=/usr/share/site-gateway-os/otel-collector.yaml
+DynamicUser=yes
+SupplementaryGroups=systemd-journal
+StateDirectory=box1-site-otel
+MemoryMax=256M
+Restart=on-failure
+RestartSec=10s
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=site-gateway-os.target
